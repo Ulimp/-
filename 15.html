@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <title>Пятнашки</title>
     <style>
-        div {
+        html {
+            background-color:aliceblue;
+        }
+        .field {
             margin-top: 20px;
             width: 456px;
             border: solid 1px transparent;
+            display: inline-block;
+            margin-right: 50px;
         }
-
-        div > div {
+        .cell {
             display: inline-block;
             width: 100px;
             height: 100px;
@@ -21,16 +25,66 @@
             border-radius: 10px;
             background-color: whitesmoke;
         }
+        #results {
+            display: inline-block;
+            vertical-align: top;
+        }
+        table {
+            border: 1px black solid;
+        }
+        td {
+            padding: 4px;
+        }
+        .table-left {
+            background-color: ghostwhite;
+        }
+        .table-right {
+            background-color: gainsboro;
+            text-align: right;
+        }
+        .container {
+            width: 50%;
+            margin: 2% 25%;
+            border-radius: 1px;
+            border: 1px black solid;
+            padding: 1%;
+            min-height: 700px;
+            background-color: white;
+        }
     </style>
 </head>
 <body>
-← → ↑ ↓
+<div class="container">
+<div>
+<input type="button" onclick="init();draw();" value="Новая игра">
+<input type="button" onclick="localStorage.setItem('results','');showResults();" value="Сбросить результаты">
+<span id="timer"></span>
+</div>
+<div class="field">
+ 
+</div>
+<div id="results">
+    <p style="text-align:center">Результаты</p>
+</div>
+</div>
 <script>
     var fifteen = {
         Move: {up: -4, left: -1, down: 4, right: 1},
-        order: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].sort(function() { return Math.random()-.5; }).concat(0),
+        order: [],
         hole: 15,
-        isCompleted: function() { return !this.order.some(function(item, i) { return item > 0 && item-1 !== i; }); },
+        startTime: 0,
+        timePassed: 0,
+        timer: null,
+        isCompleted: function() {
+            //var done = Math.random() > 0.5;
+            var done = !this.order.some(function(item, i) {
+                return item > 0 && item-1 !== i;
+            });
+            if (done) {
+                clearTimeout(this.timer);
+            }
+            return done;
+        },
         go: function(move) {
             var index = this.hole + move;
             if (!this.order[index]) return false;
@@ -38,24 +92,106 @@
                 if (Math.floor(this.hole/4) !== Math.floor(index/4)) return false;
             this.swap(index, this.hole);
             this.hole = index;
-            return true; },
-        swap: function(i1, i2) { var t = this.order[i1]; this.order[i1] = this.order[i2]; this.order[i2] = t; },
+            return true;
+        },
+        swap: function(i1, i2) {
+            var t = this.order[i1];
+            this.order[i1] = this.order[i2];
+            this.order[i2] = t;
+        },
         solvable: function(a) {
             for (var kDisorder = 0, i = 1, len = a.length-1; i < len; i++)
                 for (var j = i-1; j >= 0; j--) if (a[j] > a[i]) kDisorder++;
-            return !(kDisorder % 2); } };
-    if (!fifteen.solvable(fifteen.order)) fifteen.swap(0, 1);
-    var box = document.body.appendChild(document.createElement('div'));
-    for (var i = 0; i < 16; i++) box.appendChild(document.createElement('div'));
-    window.addEventListener('keydown', function(e) {
-        if (fifteen.go(fifteen.Move[{39: 'left', 37: 'right', 40: 'up', 38: 'down'}[e.keyCode]])) {
-            draw(); if (fifteen.isCompleted()) {
-                box.style.backgroundColor = "gold";
-                window.removeEventListener('keydown', arguments.callee); } }});
-    draw();
+            return !(kDisorder % 2);
+        },
+        init: function() {
+            this.hole = 15;
+            this.order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].sort(function() { return Math.random()-.5; }).concat(0);
+            this.startTime = new Date();
+            var f = this;
+            this.timer = setInterval(function(){
+                var el = document.getElementById("timer");
+                f.timePassed = Math.floor((new Date() - f.startTime)/1000);
+                el.innerHTML = "Прошло " + f.timePassed + " секунд. ";
+            },1000);
+        }
+    };
+    var box = document.getElementsByClassName("field")[0];
+    showResults();
+    function showResults() {
+        var rs = document.getElementById("results");
+        rs.innerHTML = '';
+        var data = localStorage.getItem('results');
+        var list = data ? JSON.parse( data ) : { 'Sat May 16 2015 16:01:38 GMT+0300 (MSK)' : '12345' };
+        var sortedKeys = Object.keys(list).sort(function(a,b){ return list[a] - list[b]});
+        var table = document.createElement("table");
+        var tr = document.createElement("tr");
+        var th1 = document.createElement("th");
+        th1.innerHTML = 'Дата';
+        var th2 = document.createElement("th");
+        th2.innerHTML = 'Время';
+        tr.appendChild(th1);
+        tr.appendChild(th2);
+        table.appendChild(tr);
+        for (var i = 0; i < sortedKeys.length; i++) {
+            var tr = document.createElement("tr");
+            var td1 = document.createElement("td");
+            var formatter = new Intl.DateTimeFormat("ru", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "numeric",
+                second: "numeric"
+            });
+            td1.innerHTML = formatter.format( new Date(sortedKeys[i]) );
+            td1.className = 'table-left';
+            var td2 = document.createElement("td");
+            td2.innerHTML = list[ sortedKeys[i] ] + ' с.';
+            td2.className = 'table-right';
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            table.appendChild(tr);
+        }
+        rs.innerHTML = '<p style="text-align:center">Результаты</p>';
+        rs.appendChild(table);
+    }
+    function updateResults(time) {
+        var data = localStorage.getItem('results');
+        var list = data ? JSON.parse(data) : {};
+        list[new Date()] = time;
+        localStorage.setItem('results', JSON.stringify(list));
+    }
     function draw() {
         for (var i = 0, tile; tile = box.childNodes[i], i < 16; i++) {
-            tile.textContent = fifteen.order[i]; tile.style.visibility = fifteen.order[i]? 'visible' : 'hidden'; } };
+            tile.textContent = fifteen.order[i];
+            tile.style.visibility = fifteen.order[i]? 'visible' : 'hidden';
+        }
+    }
+    function init() {
+        window.addEventListener('keydown', function(e) {
+            if (fifteen.go(fifteen.Move[{39: 'left', 37: 'right', 40: 'up', 38: 'down'}[e.keyCode]])) {
+                draw();
+                if (fifteen.isCompleted()) {
+                    box.style.backgroundColor = "gold";
+                    window.removeEventListener('keydown', arguments.callee);
+                    updateResults(fifteen.timePassed);
+                    showResults();
+                }
+            }});
+        box.innerHTML = '';
+        box.style.backgroundColor = "white";
+        for (var i = 0; i < 16; i++) {
+            var cell = document.createElement('div');
+            cell.className='cell';
+            box.appendChild(cell);
+        }
+        fifteen.init();
+        if (!fifteen.solvable(fifteen.order))
+            fifteen.swap(0, 1);
+    }
 </script>
+ 
 </body>
 </html>
