@@ -9,7 +9,7 @@
         }
         .field {
             margin-top: 20px;
-            width: 456px;
+            width: 480px;
             border: solid 1px transparent;
             display: inline-block;
             margin-right: 50px;
@@ -21,7 +21,7 @@
             border: solid 2px gray;
             margin: 5px;
             text-align: center;
-            font: bold 24px/100px Tahoma,sans;
+            font: bold 54px/100px Tahoma,sans;
             border-radius: 10px;
             background-color: whitesmoke;
         }
@@ -45,7 +45,7 @@
         .container {
             width: 50%;
             margin: 2% 25%;
-            border-radius: 1px;
+            border-radius: 5px;
             border: 1px black solid;
             padding: 1%;
             min-height: 700px;
@@ -122,7 +122,7 @@
         var rs = document.getElementById("results");
         rs.innerHTML = '';
         var data = localStorage.getItem('results');
-        var list = data ? JSON.parse( data ) : { 'Sat May 16 2015 16:01:38 GMT+0300 (MSK)' : '12345' };
+        var list = data ? JSON.parse( data ) : { 'Sat May 18 2015 16:01:38 GMT+0300 (MSK)' : '12345' };
         var sortedKeys = Object.keys(list).sort(function(a,b){ return list[a] - list[b]});
         var table = document.createElement("table");
         var tr = document.createElement("tr");
@@ -170,7 +170,7 @@
         }
     }
     function init() {
-        window.addEventListener('keydown', function(e) {
+        window.onkeydown = function(e) {
             if (fifteen.go(fifteen.Move[{39: 'left', 37: 'right', 40: 'up', 38: 'down'}[e.keyCode]])) {
                 draw();
                 if (fifteen.isCompleted()) {
@@ -179,7 +179,7 @@
                     updateResults(fifteen.timePassed);
                     showResults();
                 }
-            }});
+            }};
         box.innerHTML = '';
         box.style.backgroundColor = "white";
         for (var i = 0; i < 16; i++) {
